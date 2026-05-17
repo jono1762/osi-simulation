@@ -1,0 +1,1 @@
+'''defines fixed parameters such as IP addresses, MAC addresses, routing tables,'''
