@@ -5,7 +5,7 @@ import struct
 
 class Data:
     def __init__(self, value=None):
-        self.value = value
+        self.value = struct.pack('B', value)
         self.type = "DATA" if value is not None else "ACK"
 
 # Data Link Layer
@@ -118,7 +118,17 @@ class NetworkLayer:
 # Transport Layer
 
 class Segment:
-    pass
+    def __init__(self, data, count=0):
+        self.src_port = struct.pack('H', 5000)
+        self.dest_port = struct.pack('H', 80)
+        self.length = struct.pack('H', 2 + 2 + 2 + 2 + 1 + 1 + data.length)
+        self.type = struct.pack('B', data.type)
+        self.seq_num = struct.pack('B', count % 2)
+        self.data = data
+        self.checksum = self.generate_checksum()
+    
+    def generate_checksum(self):
+        pass
 
 class TransportLayer:
     pass
