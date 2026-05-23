@@ -1,10 +1,3 @@
-<<<<<<< HEAD
-class Device:
-    return 
-
-class Router:
-    return 
-=======
 from config import name_to_ip, INTERFACES
 
 class Host:
@@ -21,4 +14,3 @@ class Router:
 
 def create_devices():
     return Host("Host A"), Host("Host B"), Router("Router R1")
->>>>>>> b195b71bd710017543b05c96a8c0e0f99139e4e3
