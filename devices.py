@@ -5,7 +5,7 @@ class Host:
         self.device_name = device_name
         self.ip_address = name_to_ip[device_name]
         self.mac_address = name_to_mac[device_name]
-        self.mac_table = {self.device_name:self.mac_address}
+        self.mac_table = {self.ip_address:self.mac_address}
 
 class Router:
     def __init__(self, device_name):
@@ -22,4 +22,4 @@ class Interface:
         self.name = name
 
 def create_devices():
-    return Host("Host A",), Host("Host B"), Router("Router R1")
+    return Host("Host A"), Host("Host B"), Router("Router R1")
