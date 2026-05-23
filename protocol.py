@@ -37,11 +37,12 @@ class NetworkLayer:
             src_ip, dest_ip = NetworkLayer.get_string_rep_ip(packet.src_ip), NetworkLayer.get_string_rep_ip(packet.dest_ip)
             print(f"{device}: {NetworkLayer.name}: Segment received from Transport Layer: SRC_IP={src_ip}, DST_IP={dest_ip}, TTL={struct.unpack('B', packet.ttl)}")
             print(f"{device}: {NetworkLayer.name}: Destination IP read: {dest_ip}")
-            next_hop_ip = NetworkLayer.get_string_rep_ip(NetworkLayer.forward(device))
+            next_hop_ip = NetworkLayer.forward(device)
             print(f"{device}: {NetworkLayer.name}: Routing table lookup performed")
-            print(f"{device}: {NetworkLayer.name}: Next-hop IP determined: {next_hop_ip}")
+            print(f"{device}: {NetworkLayer.name}: Next-hop IP determined: {NetworkLayer.get_string_rep_ip(next_hop_ip)}")
             print(f"{device}: {NetworkLayer.name}: Outgoing interface selected.")
             print(f"{device}: {NetworkLayer.name}: Packet Forwarded to Data Link Layer")
+            DataLinkLayer.run(device, packet, next_hop_ip)
         
         elif type(data) == Frame:
             packet = data.payload
@@ -51,6 +52,7 @@ class NetworkLayer:
             if name_to_ip[device] == packet.dest_ip:
                 print(f"{device}: {NetworkLayer.name}: Packet identified as local delivery")
                 print(f"{device}: {NetworkLayer.name}: Segment delivered to Transport Layer")
+                TransportLayer.run(device, packet)
             else:
                 NetworkLayer.ttl_handling(packet)
                 print(f"{device}: {NetworkLayer.name}: TTL decremented: {struct.unpack('B', packet.ttl) + 1} → {struct.unpack('B', packet.ttl)}")
@@ -59,6 +61,7 @@ class NetworkLayer:
                 print(f"{device}: {NetworkLayer.name}: Next-hop IP determined: {next_hop_ip}")
                 print(f"{device}: {NetworkLayer.name}: Outgoing interface selected.")
                 print(f"{device}: {NetworkLayer.name}: Packet Forwarded to Data Link Layer")
+                DataLinkLayer.run(device, packet, next_hop_ip)
     
     @staticmethod
     def get_string_rep_ip(ip_addr):

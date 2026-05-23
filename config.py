@@ -25,6 +25,10 @@ def generate_routing_table():
     for device in DEVICES:
         routing_table[name_to_ip[device]] = name_to_ip["Interface 1"] if ip_to_network(name_to_ip[device]) == "Network 1" else name_to_ip["Interface 2"]
     
+    for interface in INTERFACES:
+        routing_table[name_to_ip[interface]] = name_to_ip["Interface 2"] if interface == "Interface 1" else name_to_ip["Interface 2"]
+    
     return routing_table
 
 ROUTING_TABLE = generate_routing_table()
+print(ROUTING_TABLE)
