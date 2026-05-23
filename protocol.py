@@ -11,12 +11,42 @@ class Data:
 # Data Link Layer
 
 class Frame:
-    pass
+    def init(self, src_mac, dest_mac, packet):
+        self.src_mac = src_mac
+        self.dest_mac = dest_mac
+        self.type = 2
+        self.payload = packet
 
 class DataLinkLayer:
-    pass
+    name = "Layer 2"
+    def run(self, device, data, next_hop_ip):
+        if type(data) == Frame: #recieve frame from LAN
+            print("Frame Recieved")
+            if data.src_mac not in device.mac_table:
+                device.mac_table[data.src_ip] = data.src_mac
+                print("Layer 2: MAC Address Learned")
+            self.deliver()
+        elif type(data) == Packet: #recieve packet from network layer
+            print("Packet recieved from Network Layer")
+            #determine how the dest mac address
+            #learn mac address
+            dest_mac = device.mac_table[next_hop_ip]
+            frame = self.encapsulate(device.mac_address, dest_mac, data)
+            self.send_across_link(frame)
 
-# Network Layer
+    def encapsulate(self, src_mac, dest_mac, packet):
+        frame = Frame(src_mac, dest_mac, packet)
+        print(f"Layer 2: Frame created: SRC_MAC={src_mac}, DST_MAC={dest_mac}")
+        return frame
+
+    def send_across_link(frame): #sends frame across a link -> print
+        print("Frame forwarded")
+        return frame
+
+    def deliver(data): #delivers packet to Network layer -> print
+        packet = data.payload
+        print("Packet Delivered to Network Layer")
+        return packet
 
 class Packet:
     def __init__(self, payload, src_hostname, dest_hostname):
