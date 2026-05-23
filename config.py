@@ -14,10 +14,11 @@ name_to_ip = {
 
 for name, ip_addr in name_to_ip.items():
     d1, d2, d3, d4 = list(map(lambda x: int(x), ip_addr.split('.')))
-    name_to_ip[name] = struct.pack("4H", d1, d2, d3, d4)
+    name_to_ip[name] = struct.pack("4B", d1, d2, d3, d4)
+    print([d1, d2, d3, d4], name_to_ip[name])
 
 def ip_to_network(ip_addr):
-    return "Network 1" if struct.unpack("4H", ip_addr)[:-1] == struct.unpack("4H", name_to_ip["Network 1"])[:-1] else "Network 2"
+    return "Network 1" if struct.unpack("4B", ip_addr)[:-1] == struct.unpack("4B", name_to_ip["Network 1"])[:-1] else "Network 2"
 
 def generate_routing_table():
     routing_table = {}

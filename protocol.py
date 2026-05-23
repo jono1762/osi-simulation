@@ -24,7 +24,7 @@ class Packet:
         self.dest_ip = name_to_ip[dest_hostname]
         self.ttl = struct.pack('B', 100)
         self.protocol = struct.pack('B', 17)
-        self.length = struct.pack('S', 4 + 4 + 1 + 1 + 2 + payload.length)
+        self.length = struct.pack('H', 4 + 4 + 1 + 1 + 2 + payload.length)
         self.payload = payload
 
 class NetworkLayer:
@@ -65,7 +65,7 @@ class NetworkLayer:
     
     @staticmethod
     def get_string_rep_ip(ip_addr):
-        return '.'.join(list(map(lambda x: str(x), struct.unpack("4H", ip_addr))))
+        return '.'.join(list(map(lambda x: str(x), struct.unpack("4B", ip_addr))))
 
     @staticmethod
     def encapsulate(segment, src_hostname, dest_hostname):
