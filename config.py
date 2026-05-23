@@ -1,6 +1,7 @@
+import struct
+
 DEVICES = ["Host A", "Host B"]
 INTERFACES = ["Interface 1", "Interface 2"]
-SUBNET_MASK = '1' * 24 + '0' * 8
 
 name_to_ip = {
     "Host A": "10.0.1.10", 
@@ -11,30 +12,12 @@ name_to_ip = {
     "Network 2": "10.0.2.0"
 }
 
-def bitwise_and(num1, num2):
-    result = ""
-    
-    for i in range(len(num1)):
-        if num1[i] == num2[i] == 1:
-            result += '1'
-        else:
-            result += '0'
-    
-    return result
-
-def ip_to_binary(ip_addr):
-    return ''.join([bin(int(num))[2:].zfill(8) for num in ip_addr.split('.')])
+for name, ip_addr in name_to_ip.items():
+    d1, d2, d3, d4 = list(map(lambda x: int(x), ip_addr.split('.')))
+    name_to_ip[name] = struct.pack("4H", d1, d2, d3, d4)
 
 def ip_to_network(ip_addr):
-    binary_ip_addr = ip_to_binary(ip_addr)
-    binary_network_1_addr = ip_to_binary(name_to_ip["Network 1"])
-    binary_network_2_addr = ip_to_binary(name_to_ip["Network 2"])
-
-    if bitwise_and(binary_ip_addr, SUBNET_MASK) == binary_network_1_addr:
-        return "Network 1"
-    
-    elif bitwise_and(binary_ip_addr, SUBNET_MASK) == binary_network_2_addr:
-        return "Network 2"
+    return "Network 1" if struct.unpack("4H", ip_addr)[:-1] == struct.unpack("4H", name_to_ip["Network 1"])[:-1] else "Network 2"
 
 def generate_routing_table():
     routing_table = {}
