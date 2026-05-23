@@ -1,9 +1,16 @@
-#Layer 2: Data Link Layer (Ethernet-like Frame)
-#❖ Destination MAC (6 bytes) → e.g., BB:BB:BB:BB:BB:BB
-#❖ Source MAC (6 bytes) → e.g., AA:AA:AA:AA:AA:AA
-#❖ Type (2 bytes) → 0x0800 (indicates IPv4 payload)
-#❖ Payload (variable) → contains the Layer 3 (IP) packet
+from config import name_to_ip, ROUTING_TABLE
+
+# Application Layer
+
+class Data:
+    def __init__(self, value=None):
+        self.value = value
+        self.type = "DATA" if value is not None else "ACK"
+
+# Data Link Layer
+
 class Frame:
+<<<<<<< HEAD
     def init(self, src_mac, dest_mac, packet):
         self.dest_mac = dest_mac
         self.source_mac = src_mac
@@ -23,16 +30,21 @@ def switches/interfaces
 
 def local forwarding
  
+=======
+    pass
 
-# Layer 3: Header (IP-like Packet)
-#❖ Source IP (4 bytes) → e.g., 10.0.1.10
-#❖ Destination IP (4 bytes) → e.g., 10.0.2.20
-#❖ TTL (1 byte) → 100 (decremented at each router)
-#❖ Protocol (1 byte) → 17 (indicates UDP payload)
-#❖ Total Length (2 bytes) → e.g., 40 (header + payload size)
-#❖ Payload (variable) → contains the Layer 4 (UDP segment)
+class DataLinkLayer:
+    pass
+
+# Network Layer
+>>>>>>> b195b71bd710017543b05c96a8c0e0f99139e4e3
+
 class Packet:
+<<<<<<< HEAD
     def init(self, src_hostname, dest_hostname, payload):
+=======
+    def __init__(self, payload, src_hostname, dest_hostname):
+>>>>>>> b195b71bd710017543b05c96a8c0e0f99139e4e3
         self.src_ip = name_to_ip[src_hostname]
         self.dest_ip = name_to_ip[dest_hostname]
         self.ttl = 100
@@ -40,6 +52,7 @@ class Packet:
         self.length = payload + (4 + 4 + 1 + 1 + 2)
         self.payload = payload
 
+<<<<<<< HEAD
 class Segment:
 # Layer 4: Header (UDP-like Segment with ACK support)
 #❖ Source Port (2 bytes) → e.g., 5000
@@ -64,3 +77,58 @@ def
 def
 
 def
+=======
+class NetworkLayer:
+    name = "Layer 3"
+
+    @staticmethod
+    def run(device, data):
+        if type(data) == Segment:
+            packet = NetworkLayer.encapsulate(data, device, "Host A" if device != "Host A" else "Host B")
+            print(f"{device}: {NetworkLayer.name}: Segment received from Transport Layer: SRC_IP={packet.src_ip}, DST_IP={packet.dest_ip}, TTL={packet.ttl}")
+            print(f"{device}: {NetworkLayer.name}: Destination IP read: {packet.dest_ip}")
+            next_hop_ip = NetworkLayer.forward(device)
+            print(f"{device}: {NetworkLayer.name}: Routing table lookup performed")
+            print(f"{device}: {NetworkLayer.name}: Next-hop IP determined: {next_hop_ip}")
+            print(f"{device}: {NetworkLayer.name}: Outgoing interface selected.")
+            print(f"{device}: {NetworkLayer.name}: Packet Forwarded to Data Link Layer")
+        
+        elif type(data) == Frame:
+            packet = data.payload
+            print(f"{device}: {NetworkLayer.name}: Segment received from Transport Layer: SRC_IP={packet.src_ip}, DST_IP={packet.dest_ip}, TTL={packet.ttl}")
+            print(f"{device}: {NetworkLayer.name}: Destination IP read: {packet.dest_ip}")
+            if name_to_ip[device] == packet.dest_ip:
+                print(f"{device}: {NetworkLayer.name}: Packet identified as local delivery")
+                print(f"{device}: {NetworkLayer.name}: Segment delivered to Transport Layer")
+            else:
+                NetworkLayer.ttl_handling(packet)
+                print(f"{device}: {NetworkLayer.name}: TTL decremented: {packet.ttl + 1} → {packet.ttl}")
+                next_hop_ip = NetworkLayer.forward(device)
+                print(f"{device}: {NetworkLayer.name}: Routing table lookup performed")
+                print(f"{device}: {NetworkLayer.name}: Next-hop IP determined: {next_hop_ip}")
+                print(f"{device}: {NetworkLayer.name}: Outgoing interface selected.")
+                print(f"{device}: {NetworkLayer.name}: Packet Forwarded to Data Link Layer")
+
+    @staticmethod
+    def encapsulate(segment, src_hostname, dest_hostname):
+        return Packet(segment, src_hostname, dest_hostname)
+
+    @staticmethod
+    def forward(device):
+        return ROUTING_TABLE[name_to_ip[device]]["Outgoing Link"]
+
+    @staticmethod
+    def ttl_handling(packet):
+        packet.ttl -= 1
+
+        if packet.ttl == 0:
+            del packet
+
+# Transport Layer
+
+class Segment:
+    pass
+
+class TransportLayer:
+    pass
+>>>>>>> b195b71bd710017543b05c96a8c0e0f99139e4e3
