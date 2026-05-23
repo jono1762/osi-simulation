@@ -23,6 +23,8 @@ def generate_routing_table():
     routing_table = {}
 
     for device in DEVICES:
-        routing_table[name_to_ip[device]]["Outgoing Link"] = name_to_ip["Interface 1"] if ip_to_network(name_to_ip[device]) == "Network 1" else name_to_ip["Interface 2"]
+        routing_table[name_to_ip[device]] = name_to_ip["Interface 1"] if ip_to_network(name_to_ip[device]) == "Network 1" else name_to_ip["Interface 2"]
+    
+    return routing_table
 
 ROUTING_TABLE = generate_routing_table()

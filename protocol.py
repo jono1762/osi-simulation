@@ -70,7 +70,7 @@ class NetworkLayer:
 
     @staticmethod
     def forward(device):
-        return ROUTING_TABLE[name_to_ip[device]]["Outgoing Link"]
+        return ROUTING_TABLE[name_to_ip[device]]
 
     @staticmethod
     def ttl_handling(packet):
