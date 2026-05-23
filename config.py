@@ -11,6 +11,13 @@ name_to_ip = {
     "Network 2": "10.0.2.0"
 }
 
+name_to_mac = {
+    "Host A": "AA:AA:AA:AA:AA:AA",
+    "Interface 1": "BB:BB:BB:BB:BB:BB", 
+    "Interface 2": "CC:CC:CC:CC:CC:CC",
+    "Host B": "DD:DD:DD:DD:DD:DD"
+}
+
 def bitwise_and(num1, num2):
     result = ""
     

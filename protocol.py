@@ -10,41 +10,45 @@ class Data:
 # Data Link Layer
 
 class Frame:
-<<<<<<< HEAD
     def init(self, src_mac, dest_mac, packet):
+        self.src_mac = src_mac
         self.dest_mac = dest_mac
-        self.source_mac = src_mac
         self.type = 2
         self.payload = packet
 
-def encapsulate(packet, dest):
-    #lookup mac address
-    
-
-    #contruct frame
-    frame = Frame(src_mac, dest, packet)
-
-def MAC Address
-
-def switches/interfaces
-
-def local forwarding
- 
-=======
-    pass
-
 class DataLinkLayer:
-    pass
+    name = "Layer 2"
+    def run(self, device, data, next_hop_ip):
+        if type(data) == Frame: #recieve frame from LAN
+            print("Frame Recieved")
+            if data.src_mac not in device.mac_table:
+                device.mac_table[data.src_ip] = data.src_mac
+                print("Layer 2: MAC Address Learned")
+            self.deliver()
+        elif type(data) == Packet: #recieve packet from network layer
+            print("Packet recieved from Network Layer")
+            #determine how the dest mac address
+            #learn mac address
+            dest_mac = device.mac_table[next_hop_ip]
+            frame = self.encapsulate(device.mac_address, dest_mac, data)
+            self.send_across_link(frame)
 
-# Network Layer
->>>>>>> b195b71bd710017543b05c96a8c0e0f99139e4e3
+    def encapsulate(self, src_mac, dest_mac, packet):
+        frame = Frame(src_mac, dest_mac, packet)
+        print(f"Layer 2: Frame created: SRC_MAC={src_mac}, DST_MAC={dest_mac}")
+        return frame
+
+    def send_across_link(frame): #sends frame across a link -> print
+        print("Frame forwarded")
+        return frame
+
+    def deliver(data): #delivers packet to Network layer -> print
+        packet = data.payload
+        print("Packet Delivered to Network Layer")
+        return packet
 
 class Packet:
-<<<<<<< HEAD
-    def init(self, src_hostname, dest_hostname, payload):
-=======
     def __init__(self, payload, src_hostname, dest_hostname):
->>>>>>> b195b71bd710017543b05c96a8c0e0f99139e4e3
         self.src_ip = name_to_ip[src_hostname]
         self.dest_ip = name_to_ip[dest_hostname]
         self.ttl = 100
@@ -52,32 +56,6 @@ class Packet:
         self.length = payload + (4 + 4 + 1 + 1 + 2)
         self.payload = payload
 
-<<<<<<< HEAD
-class Segment:
-# Layer 4: Header (UDP-like Segment with ACK support)
-#❖ Source Port (2 bytes) → e.g., 5000
-#❖ Destination Port (2 bytes) → e.g., 80
-#❖ Length (2 bytes) → e.g., 100 (header + data)
-#❖ Checksum (2 bytes) → e.g., computed value for error detection
-#❖ Type (1 byte) → 0 = DATA, 1 = ACK
-#❖ Sequence Number (1 byte) → e.g., 0 or 1
-#❖ Data (variable) → contains the application message (empty for ACK)
-     def __init__(self, payload):
-        self.source_port = 
-        self.destination_port = 
-        self.length
-        self.checksum = 
-        self.sequence_number
-        self.type
-        self.data
-
-#Transport Layer Functions
-def 
-
-def
-
-def
-=======
 class NetworkLayer:
     name = "Layer 3"
 
@@ -131,4 +109,3 @@ class Segment:
 
 class TransportLayer:
     pass
->>>>>>> b195b71bd710017543b05c96a8c0e0f99139e4e3
