@@ -42,8 +42,6 @@ def transmit(value):
     data = Data(value)
 
     TransportLayer.run(host_A, data)
-    NetworkLayer.run(host_A, data)
-    DataLinkLayer.run(host_A, data)
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
