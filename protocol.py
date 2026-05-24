@@ -91,13 +91,13 @@ class NetworkLayer:
             print(f"{device.name}: {NetworkLayer.name}: Routing table lookup performed")
             print(f"{device.name}: {NetworkLayer.name}: Next-hop IP determined: {NetworkLayer.get_string_rep_ip(next_hop_ip)}")
             print(f"{device.name}: {NetworkLayer.name}: Outgoing interface selected")
-            print(f"{device.name}: {NetworkLayer.name}: Packet Forwarded to Data Link Layer\n")
+            print(f"{device.name}: {NetworkLayer.name}: Packet forwarded to Data Link Layer\n")
             DataLinkLayer.run(device, packet, next_hop_ip)
         
         elif type(data) == Frame:
             packet = data.payload
             src_ip, dest_ip = NetworkLayer.get_string_rep_ip(packet.src_ip), NetworkLayer.get_string_rep_ip(packet.dest_ip)
-            print(f"{device.name}: {NetworkLayer.name}: Frame received from Data Link Layer: SRC_IP={src_ip}, DST_IP={dest_ip}, TTL={struct.unpack('B', packet.ttl)[0]}")
+            print(f"{device.name}: {NetworkLayer.name}: Packet received from Data Link Layer: SRC_IP={src_ip}, DST_IP={dest_ip}, TTL={struct.unpack('B', packet.ttl)[0]}")
             print(f"{device.name}: {NetworkLayer.name}: Destination IP read: {dest_ip}")
             if type(device) != Router and name_to_ip[device.name] == packet.dest_ip:
                 print(f"{device.name}: {NetworkLayer.name}: Packet identified as local delivery")
@@ -191,12 +191,17 @@ class TransportLayer:
             segment = data.payload
             if segment.generate_checksum() == segment.checksum:
                 print(f"{device.name}: {TransportLayer.name}: Checksum verified")
-                print(f"{device.name}: {TransportLayer.name}: DATA segment delivered to Application Layer. Data size={struct.unpack('H', segment.data.value)[0]}\n")
                 if struct.unpack('B', segment.type)[0] == 0:
+                    print(f"{device.name}: {TransportLayer.name}: DATA segment delivered to Application Layer. Data size={struct.unpack('H', segment.data.value)[0]}")
                     ack = Data(0)
-                    ack_segment = Segment(ack, struct.unpack('B', segment.seq_num)[0])
+                    seq_num = struct.unpack('B', segment.seq_num)[0]
+                    ack_segment = Segment(ack, seq_num)
+                    print(f"{device.name}: {TransportLayer.name}: Segment created by adding transport layer header (ACK, seq={seq_num})")
+                    print(f"{device.name}: {TransportLayer.name}: Segment sent to Network Layer\n")
                 #if struct.unpack('B', segment.seq_num)[0] == 0:
                     NetworkLayer.run(device, ack_segment)
+                else:
+                    print(f"{device.name}: {TransportLayer.name}: ACK received: seq={struct.unpack('B', segment.seq_num)[0]}")
 
     @staticmethod
     def create_segment(data):
