@@ -1,6 +1,6 @@
 import struct
 
-DEVICES = ["Host A", "Host B"]
+HOSTS = ["Host A", "Host B"]
 INTERFACES = ["Interface 1", "Interface 2"]
 
 name_to_ip = {
@@ -33,7 +33,9 @@ def bitwise_and(num1, num2):
 for name, ip_addr in name_to_ip.items():
     d1, d2, d3, d4 = list(map(lambda x: int(x), ip_addr.split('.')))
     name_to_ip[name] = struct.pack("4B", d1, d2, d3, d4)
-    print([d1, d2, d3, d4], name_to_ip[name])
+
+for name, mac_addr in name_to_mac.items():
+    name_to_mac[name] = struct.pack("17s", mac_addr.encode("utf-8"))
 
 def ip_to_binary(ip_addr):
     return ''.join([bin(int(num))[2:].zfill(8) for num in ip_addr.split('.')])
@@ -44,13 +46,13 @@ def ip_to_network(ip_addr):
 def generate_routing_table():
     routing_table = {}
 
-    for device in DEVICES:
-        routing_table[name_to_ip[device]] = name_to_ip["Interface 1"] if ip_to_network(name_to_ip[device]) == "Network 1" else name_to_ip["Interface 2"]
+    for host in HOSTS:
+        routing_table[host] = name_to_ip["Interface 1"] if ip_to_network(name_to_ip[host]) == "Network 1" else name_to_ip["Interface 2"]
     
-    for interface in INTERFACES:
-        routing_table[name_to_ip[interface]] = name_to_ip["Interface 2"] if interface == "Interface 1" else name_to_ip["Interface 2"]
+    routing_table["Router R1"] = {}
+    routing_table["Router R1"]["Interface 1"] = name_to_ip["Host A"]
+    routing_table["Router R1"]["Interface 2"] = name_to_ip["Host B"]
     
     return routing_table
 
 ROUTING_TABLE = generate_routing_table()
-print(ROUTING_TABLE)
