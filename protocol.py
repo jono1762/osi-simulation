@@ -27,7 +27,7 @@ class DataLinkLayer:
                 print("Layer 2: MAC Address Learned")
             self.deliver()
         elif type(data) == Packet: #recieve packet from network layer
-            print("Packet recieved from Network Layer")
+            print("Layer 2: Packet recieved from Network Layer")
             #determine how the dest mac address
             #learn mac address
             dest_mac = device.mac_table[next_hop_ip]
@@ -40,12 +40,12 @@ class DataLinkLayer:
         return frame
 
     def send_across_link(frame): #sends frame across a link -> print
-        print("Frame forwarded")
+        print("Layer 2: Frame forwarded")
         return frame
-
+ 
     def deliver(data): #delivers packet to Network layer -> print
         packet = data.payload
-        print("Packet Delivered to Network Layer")
+        print("Layer 2: Packet Delivered to Network Layer")
         return packet
 
 class Packet:
@@ -131,4 +131,26 @@ class Segment:
         pass
 
 class TransportLayer:
-    pass
+    def run(self, data):
+        #take input and cr
+        if type(data) == Data:
+            #create segment
+            segment = Segment(seq=sequence_number, data=data)
+            #split segment if too long
+
+            #Sender Side -> Use Sequence Number
+            pass
+        elif type(data) == Packet:
+            #Reciever Side -> send ack
+            #recieving device needs expected sequence number
+            pass
+
+    def send(data):
+
+    def recieve(data):
+        #if segment.sequence_number =  expected_sequence_number:
+            #send ack  
+            #update expected ack
+    
+
+
