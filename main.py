@@ -2,6 +2,8 @@ from devices import DEVICES
 from protocol import Data, TransportLayer
 import sys
 
+data_left = None
+
 def transmit(value):
     data = Data(value)
 
