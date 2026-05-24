@@ -7,7 +7,7 @@ import struct
 class Data:
     def __init__(self, value=None):
         self.value = struct.pack('B', value)
-        self.type = 0 if value is None else 1
+        self.type = struct.pack('B', 0 if value is None else 1)
 
 # Data Link Layer
 
@@ -21,38 +21,47 @@ class Frame:
 class DataLinkLayer:
     name = "Layer 2"
 
-    def run(device, data, next_hop_ip=None):
+    @staticmethod
+    def run(device, data, next_hop_ip=None, interface=None):
         if type(data) == Frame: #receive frame from LAN
-            print(f"{device.name}: {DataLinkLayer.name}: Frame received")
-            if data.src_mac not in device.mac_table:
-                device.mac_table[data.payload.src_ip] = data.src_mac
-                print(f"{device.name}: {DataLinkLayer.name}: MAC Address Learned")
-            print(f"{device.name}: {DataLinkLayer.name}: Packet Delivered to Network Layer\n")
+            if interface is not None:
+                print(f"{device.name}: {DataLinkLayer.name}: Frame received on {interface}")
+                print(f"{device.name}: {DataLinkLayer.name}: Source MAC learned: {data.src_mac} on {interface}")
+            else:
+                print(f"{device.name}: {DataLinkLayer.name}: Frame received")
+                print(f"{device.name}: {DataLinkLayer.name}: Source MAC learned: {data.src_mac}")
+            # if data.src_mac not in device.mac_table:
+            #     device.mac_table[data.payload.src_ip] = data.src_mac
+            print(f"{device.name}: {DataLinkLayer.name}: Packet delivered to Network Layer\n")
             NetworkLayer.run(device, data)
         
         elif type(data) == Packet: #receive packet from network layer
             print(f"{device.name}: {DataLinkLayer.name}: Packet received from Network Layer")
             # Determine how to learn MAC address
-            for name, ip in name_to_ip.items():
-                if ip == next_hop_ip:
-                    dest_name = name
-                    dest_mac = name_to_mac[name]
-                    break
-            print(f"{device.name}: {DataLinkLayer.name}: MAC lookup for next-hop IP ({NetworkLayer.get_string_rep_ip(next_hop_ip)}) → {dest_mac}")
-            if type(device) == Router:
-                frame = DataLinkLayer.encapsulate(device.mac_address, dest_mac, data)
+            src_name = device.name if type(device) != Router else "Interface 1" if name_to_ip["Host A"] == next_hop_ip else "Interface 2"
+            src_mac = device.mac_address if type(device) != Router else name_to_mac[src_name]
+            dest_name, dest_mac = DataLinkLayer.get_dest_mac_address(next_hop_ip)
+            print(f"{device.name}: {DataLinkLayer.name}: Destination MAC lookup for next-hop IP ({NetworkLayer.get_string_rep_ip(next_hop_ip)}) → {dest_mac}")
+            frame = DataLinkLayer.encapsulate(src_mac, dest_mac, data)
+            print(f"{device.name}: {DataLinkLayer.name}: Frame created: SRC_MAC={src_mac}, DST_MAC={dest_mac}")
+            if type(device) != Router:
+                print(f"{device.name}: {DataLinkLayer.name}: Frame sent\n")
             else:
-                frame = DataLinkLayer.encapsulate(device.mac_address, dest_mac, data)
-            print(f"{device.name}: {DataLinkLayer.name}: Frame created: SRC_MAC={device.mac_address}, DST_MAC={dest_mac}")
-            print(f"{device.name}: {DataLinkLayer.name}: Frame sent\n")
+                print(f"{device.name}: {DataLinkLayer.name}: Frame forwarded on {src_name}\n")
             if dest_name in HOSTS:
-                DataLinkLayer.run(DEVICES[dest_name], frame)
+                DataLinkLayer.run(DEVICES[dest_name], frame, None)
             if dest_name in INTERFACES:
-                DataLinkLayer.run(DEVICES["Router R1"], frame)
+                DataLinkLayer.run(DEVICES["Router R1"], frame, None, dest_name)
 
+    @staticmethod
     def encapsulate(src_mac, dest_mac, packet):
-        frame = Frame(src_mac, dest_mac, packet)
-        return frame
+        return Frame(src_mac, dest_mac, packet)
+
+    @staticmethod
+    def get_dest_mac_address(next_hop_ip):
+        for name, ip in name_to_ip.items():
+            if ip == next_hop_ip:
+                return name, name_to_mac[name]
 
 class Packet:
     def __init__(self, payload, src_hostname, dest_hostname):
@@ -76,14 +85,14 @@ class NetworkLayer:
             next_hop_ip = NetworkLayer.forward(device)
             print(f"{device.name}: {NetworkLayer.name}: Routing table lookup performed")
             print(f"{device.name}: {NetworkLayer.name}: Next-hop IP determined: {NetworkLayer.get_string_rep_ip(next_hop_ip)}")
-            print(f"{device.name}: {NetworkLayer.name}: Outgoing interface selected.")
+            print(f"{device.name}: {NetworkLayer.name}: Outgoing interface selected")
             print(f"{device.name}: {NetworkLayer.name}: Packet Forwarded to Data Link Layer\n")
             DataLinkLayer.run(device, packet, next_hop_ip)
         
         elif type(data) == Frame:
             packet = data.payload
             src_ip, dest_ip = NetworkLayer.get_string_rep_ip(packet.src_ip), NetworkLayer.get_string_rep_ip(packet.dest_ip)
-            print(f"{device.name}: {NetworkLayer.name}: Segment received from Transport Layer: SRC_IP={src_ip}, DST_IP={dest_ip}, TTL={struct.unpack('B', packet.ttl)[0]}")
+            print(f"{device.name}: {NetworkLayer.name}: Frame received from Data Link Layer: SRC_IP={src_ip}, DST_IP={dest_ip}, TTL={struct.unpack('B', packet.ttl)[0]}")
             print(f"{device.name}: {NetworkLayer.name}: Destination IP read: {dest_ip}")
             if type(device) != Router and name_to_ip[device.name] == packet.dest_ip:
                 print(f"{device.name}: {NetworkLayer.name}: Packet identified as local delivery")
@@ -100,8 +109,8 @@ class NetworkLayer:
                     next_hop_ip = NetworkLayer.forward(device, interface)
                 print(f"{device.name}: {NetworkLayer.name}: Routing table lookup performed")
                 print(f"{device.name}: {NetworkLayer.name}: Next-hop IP determined: {NetworkLayer.get_string_rep_ip(next_hop_ip)}")
-                print(f"{device.name}: {NetworkLayer.name}: Outgoing interface selected.")
-                print(f"{device.name}: {NetworkLayer.name}: Packet Forwarded to Data Link Layer\n")
+                print(f"{device.name}: {NetworkLayer.name}: Outgoing interface selected ({interface})")
+                print(f"{device.name}: {NetworkLayer.name}: Packet forwarded to Data Link Layer\n")
                 DataLinkLayer.run(device, packet, next_hop_ip)
     
     @staticmethod
@@ -135,11 +144,12 @@ class Segment:
         self.src_port = struct.pack('H', 5000)
         self.dest_port = struct.pack('H', 80)
         self.length = struct.pack('H', 2 + 2 + 2 + 2 + 1 + 1 + struct.unpack('B', data.value)[0])
-        self.type = struct.pack('B', data.type)
+        self.type = struct.pack('B', struct.unpack('B', data.type)[0])
         self.seq_num = struct.pack('B', count % 2)
         self.data = data
         self.checksum = self.generate_checksum()
     
+    # Fix checksum logic so more accurate (e.g. generating 16-bit words logic incorrect)
     def generate_checksum(self):
         rep_segment = self.src_port + self.dest_port + self.length + self.type + self.seq_num + self.data.value
         if len(rep_segment) % 2 != 0:
@@ -161,10 +171,10 @@ class TransportLayer:
     name = "Layer 4"
 
     @staticmethod
-    def run(device, data, count):
+    def run(device, data):
         if type(data) == Data:
             print(f"{device.name}: {TransportLayer.name}: Data received from Application Layer. Data size={struct.unpack('B', data.value)[0]}")
-            segment = Segment(data, count)
+            segment = Segment(data)
             print(f"{device.name}: {TransportLayer.name}: Checksum computed")
             print(f"{device.name}: {TransportLayer.name}: Segment created by adding transport layer header (DATA, seq={struct.unpack('B', segment.seq_num)[0]}) (encapsulation)")
             print(f"{device.name}: {TransportLayer.name}: Segment sent to Network Layer\n")
