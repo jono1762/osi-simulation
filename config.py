@@ -19,26 +19,12 @@ name_to_mac = {
     "Host B": "DD:DD:DD:DD:DD:DD"
 }
 
-def bitwise_and(num1, num2):
-    result = ""
-    
-    for i in range(len(num1)):
-        if num1[i] == num2[i] == 1:
-            result += '1'
-        else:
-            result += '0'
-    
-    return result
-
 for name, ip_addr in name_to_ip.items():
     d1, d2, d3, d4 = list(map(lambda x: int(x), ip_addr.split('.')))
     name_to_ip[name] = struct.pack("4B", d1, d2, d3, d4)
 
 for name, mac_addr in name_to_mac.items():
     name_to_mac[name] = struct.pack("17s", mac_addr.encode("utf-8"))
-
-def ip_to_binary(ip_addr):
-    return ''.join([bin(int(num))[2:].zfill(8) for num in ip_addr.split('.')])
 
 def ip_to_network(ip_addr):
     return "Network 1" if struct.unpack("4B", ip_addr)[:-1] == struct.unpack("4B", name_to_ip["Network 1"])[:-1] else "Network 2"
