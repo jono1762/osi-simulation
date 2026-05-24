@@ -26,18 +26,26 @@ for name, ip_addr in name_to_ip.items():
 for name, mac_addr in name_to_mac.items():
     name_to_mac[name] = struct.pack("17s", mac_addr.encode("utf-8"))
 
-def ip_to_network(ip_addr):
-    return "Network 1" if struct.unpack("4B", ip_addr)[:-1] == struct.unpack("4B", name_to_ip["Network 1"])[:-1] else "Network 2"
-
 def generate_routing_table():
     routing_table = {}
+    for host in HOSTS:
+        routing_table[host] = {}
+    routing_table["Router R1"] = {}
 
     for host in HOSTS:
-        routing_table[host] = name_to_ip["Interface 1"] if ip_to_network(name_to_ip[host]) == "Network 1" else name_to_ip["Interface 2"]
+        dest = "Host B" if host == "Host A" else "Host A"
+        interface = "Interface 2" if dest == "Host A" else "Interface 1"
+        routing_table[host] = {}
+
+        routing_table[host][name_to_ip[dest]] = {
+            "Interface": interface,
+            "Next-hop IP": name_to_ip[interface]
+        }
     
-    routing_table["Router R1"] = {}
-    routing_table["Router R1"]["Interface 1"] = name_to_ip["Host A"]
-    routing_table["Router R1"]["Interface 2"] = name_to_ip["Host B"]
+        routing_table["Router R1"][name_to_ip[host]] = {
+            "Interface": interface,
+            "Next-hop IP": name_to_ip[host]
+        }
     
     return routing_table
 

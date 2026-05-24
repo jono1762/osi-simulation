@@ -1,7 +1,9 @@
-from config import name_to_ip, name_to_mac, ip_to_network, ROUTING_TABLE, HOSTS, INTERFACES
+from config import name_to_ip, name_to_mac, ROUTING_TABLE, HOSTS, INTERFACES
 from devices import DEVICES, Router
 import struct
 from copy import deepcopy
+import sys
+sys.setrecursionlimit(30)
 
 # Application Layer
 
@@ -87,7 +89,7 @@ class NetworkLayer:
             src_ip, dest_ip = NetworkLayer.get_string_rep_ip(packet.src_ip), NetworkLayer.get_string_rep_ip(packet.dest_ip)
             print(f"{device.name}: {NetworkLayer.name}: Segment received from Transport Layer: SRC_IP={src_ip}, DST_IP={dest_ip}, TTL={struct.unpack('B', packet.ttl)[0]}")
             print(f"{device.name}: {NetworkLayer.name}: Destination IP read: {dest_ip}")
-            next_hop_ip = NetworkLayer.forward(device)
+            interface, next_hop_ip = NetworkLayer.forward(device, packet.dest_ip)
             print(f"{device.name}: {NetworkLayer.name}: Routing table lookup performed")
             print(f"{device.name}: {NetworkLayer.name}: Next-hop IP determined: {NetworkLayer.get_string_rep_ip(next_hop_ip)}")
             print(f"{device.name}: {NetworkLayer.name}: Outgoing interface selected")
@@ -107,11 +109,7 @@ class NetworkLayer:
                 NetworkLayer.ttl_handling(packet)
                 ttl = struct.unpack('B', packet.ttl)[0]
                 print(f"{device.name}: {NetworkLayer.name}: TTL decremented: {ttl + 1} → {ttl}")
-                if type(device) != Router:
-                    next_hop_ip = NetworkLayer.forward(device)
-                else:
-                    interface = "Interface 1" if ip_to_network(packet.dest_ip) == ip_to_network(name_to_ip["Interface 1"]) else "Interface 2"
-                    next_hop_ip = NetworkLayer.forward(device, interface)
+                interface, next_hop_ip = NetworkLayer.forward(device, packet.dest_ip)
                 print(f"{device.name}: {NetworkLayer.name}: Routing table lookup performed")
                 print(f"{device.name}: {NetworkLayer.name}: Next-hop IP determined: {NetworkLayer.get_string_rep_ip(next_hop_ip)}")
                 print(f"{device.name}: {NetworkLayer.name}: Outgoing interface selected ({interface})")
@@ -127,10 +125,8 @@ class NetworkLayer:
         return Packet(segment, src_hostname, dest_hostname)
 
     @staticmethod
-    def forward(device, interface=None):
-        if interface is not None:
-            return ROUTING_TABLE[device.name][interface]
-        return ROUTING_TABLE[device.name]
+    def forward(device, dest_ip):
+        return ROUTING_TABLE[device.name][dest_ip].values()
 
     @staticmethod
     def ttl_handling(packet):
