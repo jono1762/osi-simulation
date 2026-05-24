@@ -15,7 +15,7 @@ class Frame:
     def __init__(self, src_mac, dest_mac, packet):
         self.src_mac = src_mac
         self.dest_mac = dest_mac
-        self.type = 2
+        self.type = struct.pack('H', 8 * 16 ** 2)
         self.payload = packet
 
 class DataLinkLayer:
@@ -26,10 +26,10 @@ class DataLinkLayer:
         if type(data) == Frame: #receive frame from LAN
             if interface is not None:
                 print(f"{device.name}: {DataLinkLayer.name}: Frame received on {interface}")
-                print(f"{device.name}: {DataLinkLayer.name}: Source MAC learned: {data.src_mac} on {interface}")
+                print(f"{device.name}: {DataLinkLayer.name}: Source MAC learned: {DataLinkLayer.get_string_rep_mac(data.src_mac)} on {interface}")
             else:
                 print(f"{device.name}: {DataLinkLayer.name}: Frame received")
-                print(f"{device.name}: {DataLinkLayer.name}: Source MAC learned: {data.src_mac}")
+                print(f"{device.name}: {DataLinkLayer.name}: Source MAC learned: {DataLinkLayer.get_string_rep_mac(data.src_mac)}")
             # if data.src_mac not in device.mac_table:
             #     device.mac_table[data.payload.src_ip] = data.src_mac
             print(f"{device.name}: {DataLinkLayer.name}: Packet delivered to Network Layer\n")
@@ -41,9 +41,9 @@ class DataLinkLayer:
             src_name = device.name if type(device) != Router else "Interface 1" if name_to_ip["Host A"] == next_hop_ip else "Interface 2"
             src_mac = device.mac_address if type(device) != Router else name_to_mac[src_name]
             dest_name, dest_mac = DataLinkLayer.get_dest_mac_address(next_hop_ip)
-            print(f"{device.name}: {DataLinkLayer.name}: Destination MAC lookup for next-hop IP ({NetworkLayer.get_string_rep_ip(next_hop_ip)}) → {dest_mac}")
+            print(f"{device.name}: {DataLinkLayer.name}: Destination MAC lookup for next-hop IP ({NetworkLayer.get_string_rep_ip(next_hop_ip)}) → {DataLinkLayer.get_string_rep_mac(dest_mac)}")
             frame = DataLinkLayer.encapsulate(src_mac, dest_mac, data)
-            print(f"{device.name}: {DataLinkLayer.name}: Frame created: SRC_MAC={src_mac}, DST_MAC={dest_mac}")
+            print(f"{device.name}: {DataLinkLayer.name}: Frame created: SRC_MAC={DataLinkLayer.get_string_rep_mac(src_mac)}, DST_MAC={DataLinkLayer.get_string_rep_mac(dest_mac)}")
             if type(device) != Router:
                 print(f"{device.name}: {DataLinkLayer.name}: Frame sent\n")
             else:
@@ -62,6 +62,10 @@ class DataLinkLayer:
         for name, ip in name_to_ip.items():
             if ip == next_hop_ip:
                 return name, name_to_mac[name]
+    
+    @staticmethod
+    def get_string_rep_mac(mac_addr):
+        return struct.unpack("17s", mac_addr)[0].decode('utf-8')
 
 class Packet:
     def __init__(self, payload, src_hostname, dest_hostname):

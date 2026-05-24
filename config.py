@@ -34,6 +34,9 @@ for name, ip_addr in name_to_ip.items():
     d1, d2, d3, d4 = list(map(lambda x: int(x), ip_addr.split('.')))
     name_to_ip[name] = struct.pack("4B", d1, d2, d3, d4)
 
+for name, mac_addr in name_to_mac.items():
+    name_to_mac[name] = struct.pack("17s", mac_addr.encode("utf-8"))
+
 def ip_to_binary(ip_addr):
     return ''.join([bin(int(num))[2:].zfill(8) for num in ip_addr.split('.')])
 
@@ -49,11 +52,6 @@ def generate_routing_table():
     routing_table["Router R1"] = {}
     routing_table["Router R1"]["Interface 1"] = name_to_ip["Host A"]
     routing_table["Router R1"]["Interface 2"] = name_to_ip["Host B"]
-    
-    # routing_table[[name_to_ip]]
-    # # Make interfaces routing table under one router
-    # for interface in INTERFACES:
-    #     routing_table[name_to_ip[interface]] = name_to_ip["Interface 2"] if interface == "Interface 1" else name_to_ip["Interface 2"]
     
     return routing_table
 
