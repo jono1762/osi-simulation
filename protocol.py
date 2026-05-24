@@ -222,7 +222,7 @@ class Segment:
         for word in words:
             result += struct.unpack('H', word)[0] # Sum words together
 
-        if result > LARGEST_NUM: # Account for overflow
+        while result > LARGEST_NUM: # Account for overflow
             result = result // LARGEST_NUM + result % LARGEST_NUM
                
         return result
