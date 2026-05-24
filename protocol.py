@@ -106,7 +106,10 @@ class NetworkLayer:
                 print(f"{device.name}: {NetworkLayer.name}: Segment delivered to Transport Layer\n")
                 TransportLayer.run(device, packet)
             else:
-                NetworkLayer.ttl_handling(packet)
+                dropped = NetworkLayer.ttl_handling(packet)
+                if dropped:
+                    print(f"{device.name}: {NetworkLayer.name}: Packet TTL expired")
+                    return
                 ttl = struct.unpack('B', packet.ttl)[0]
                 print(f"{device.name}: {NetworkLayer.name}: TTL decremented: {ttl + 1} → {ttl}")
                 interface, next_hop_ip = NetworkLayer.forward(device, packet.dest_ip)
@@ -135,8 +138,11 @@ class NetworkLayer:
 
         if ttl == 0:
             del packet
+            return True
         else:
             packet.ttl = struct.pack('B', ttl)
+
+        return False
 
 # Transport Layer
 LARGEST_NUM = 2 ** 16 - 1
