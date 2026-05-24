@@ -176,13 +176,14 @@ class Segment:
 data_left = None
 expected_seq = None
 original_data = None
+last_ack = 1
 
 class TransportLayer:
     name = "Layer 4"
 
     @staticmethod
     def run(device, data):
-        global data_left, expected_seq, original_data
+        global data_left, expected_seq, original_data, last_ack
 
         if type(data) == Data:
             if data_left == 0:
@@ -209,6 +210,7 @@ class TransportLayer:
                     print(f"{device.name}: {TransportLayer.name}: DATA segment delivered to Application Layer. Data size={struct.unpack('H', segment.data.value)[0]}")
                     ack = Data(0)
                     seq_num = struct.unpack('B', segment.seq_num)[0]
+                    last_ack = seq_num
                     ack_segment = Segment(ack, seq_num)
                     print(f"{device.name}: {TransportLayer.name}: Segment created by adding transport layer header (ACK, seq={seq_num})")
                     print(f"{device.name}: {TransportLayer.name}: Segment sent to Network Layer\n")
@@ -216,9 +218,22 @@ class TransportLayer:
                 else:
                     ack_seq = struct.unpack('B', segment.seq_num)[0]
                     if expected_seq == ack_seq:
+                        last_ack = ack_seq
                         print(f"{device.name}: {TransportLayer.name}: ACK received: seq={ack_seq}")
                         expected_seq = 1 - ack_seq
                         TransportLayer.run(device, original_data)
+                    else:
+                        print("Retransmitting segment")
+                        #Retransmit current segment
+                            #can do this by storing a copy of most recent segment transmitted,  or making a new segment with the same size
+                        #expected sequence number stays the same
+            else:
+                print("FrameDiscarded")
+                ack = Data(0)
+                seq_num = last_ack
+                ack_segment = Segment(ack, seq_num)
+                print("Transmitting last ACK")
+                NetworkLayer.run(device, ack_segment)
 
     @staticmethod
     def create_segment(data, seq_num):
