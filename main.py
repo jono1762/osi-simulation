@@ -2,6 +2,8 @@ from devices import create_devices
 from protocol import Data, DataLinkLayer, NetworkLayer, TransportLayer
 import sys
 
+data_left = None
+
 def transmit(value):
     host_A, host_B, router = create_devices()
     data = Data(value)
