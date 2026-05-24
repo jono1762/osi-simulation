@@ -8,7 +8,7 @@ from copy import deepcopy
 class Data:
     def __init__(self, value=None):
         self.value = struct.pack('H', value)
-        self.type = struct.pack('B', 0 if value is None else 1)
+        self.type = struct.pack('B', 0 if value != 0 else 1)
 
 # Data Link Layer
 
@@ -192,7 +192,12 @@ class TransportLayer:
             if segment.generate_checksum() == segment.checksum:
                 print(f"{device.name}: {TransportLayer.name}: Checksum verified")
                 print(f"{device.name}: {TransportLayer.name}: DATA segment delivered to Application Layer. Data size={struct.unpack('H', segment.data.value)[0]}\n")
-    
+                if struct.unpack('B', segment.type)[0] == 0:
+                    ack = Data(0)
+                    ack_segment = Segment(ack, struct.unpack('B', segment.seq_num)[0])
+                #if struct.unpack('B', segment.seq_num)[0] == 0:
+                    NetworkLayer.run(device, ack_segment)
+
     @staticmethod
     def create_segment(data):
         segments_array = []

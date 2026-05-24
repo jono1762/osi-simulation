@@ -1,4 +1,6 @@
 # CITS3002-Project
-Implementation
+Instructions to Run
 
-Instructions
+Implementation
+Files
+Class
