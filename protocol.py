@@ -27,12 +27,16 @@ class DataLinkLayer:
         if type(data) == Frame: #receive frame from LAN
             if interface is not None:
                 print(f"{device.name}: {DataLinkLayer.name}: Frame received on {interface}")
-                print(f"{device.name}: {DataLinkLayer.name}: Source MAC learned: {DataLinkLayer.get_string_rep_mac(data.src_mac)} on {interface}")
+                if data.src_mac not in device.mac_table:
+
+                    device.mac_table[data.src_mac] = interface
+                    print(f"{device.name}: {DataLinkLayer.name}: Source MAC learned: {DataLinkLayer.get_string_rep_mac(data.src_mac)} on {interface}")
             else:
                 print(f"{device.name}: {DataLinkLayer.name}: Frame received")
-                print(f"{device.name}: {DataLinkLayer.name}: Source MAC learned: {DataLinkLayer.get_string_rep_mac(data.src_mac)}")
-            # if data.src_mac not in device.mac_table:
-            #     device.mac_table[data.payload.src_ip] = data.src_mac
+                if data.src_mac not in device.mac_table:
+                    device.mac_table[data.src_mac] = interface
+                    print(f"{device.name}: {DataLinkLayer.name}: Source MAC learned: {DataLinkLayer.get_string_rep_mac(data.src_mac)}")
+
             print(f"{device.name}: {DataLinkLayer.name}: Packet delivered to Network Layer\n")
             NetworkLayer.run(device, data)
         
