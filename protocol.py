@@ -6,7 +6,7 @@ from copy import deepcopy
 # Application Layer
 
 class Data:
-    def __init__(self, value=None):
+    def __init__(self, value):
         self.value = struct.pack('H', value)
         self.type = struct.pack('B', 0 if value != 0 else 1)
 
@@ -174,28 +174,29 @@ class Segment:
         return result
 
 data_left = None
-expected_seq = None
 original_data = None
-last_ack = 1
+last_segment = None
+expected_seq_num = 0
+last_seq_num = 1
 
 class TransportLayer:
     name = "Layer 4"
 
     @staticmethod
     def run(device, data):
-        global data_left, expected_seq, original_data, last_ack
+        global data_left, expected_seq_num, original_data, last_seq_num, last_segment
 
         if type(data) == Data:
             if data_left == 0:
                 return
             
-            if data_left is None and expected_seq is None:
+            if data_left is None:
                 data_left = struct.unpack('H', data.value)[0]
-                expected_seq = 0
                 original_data = data
                 print(f"{device.name}: {TransportLayer.name}: Data received from Application Layer. Data size={struct.unpack('H', data.value)[0]}")
             
-            segment = TransportLayer.create_segment(data, expected_seq)
+            segment = TransportLayer.create_segment(data, expected_seq_num)
+            last_segment = segment
             print(f"{device.name}: {TransportLayer.name}: Checksum computed")
             print(f"{device.name}: {TransportLayer.name}: Segment created by adding transport layer header (DATA, seq={struct.unpack('B', segment.seq_num)[0]}) (encapsulation)")
             print(f"{device.name}: {TransportLayer.name}: Segment sent to Network Layer\n")
@@ -204,36 +205,46 @@ class TransportLayer:
         elif type(data) == Packet:
             print(f"{device.name}: {TransportLayer.name}: Segment received from Network Layer")
             segment = data.payload
-            if LARGEST_NUM - segment.generate_checksum() == struct.unpack('H', segment.checksum)[0]:
-                print(f"{device.name}: {TransportLayer.name}: Checksum verified")
-                if struct.unpack('B', segment.type)[0] == 0:
-                    print(f"{device.name}: {TransportLayer.name}: DATA segment delivered to Application Layer. Data size={struct.unpack('H', segment.data.value)[0]}")
-                    ack = Data(0)
-                    seq_num = struct.unpack('B', segment.seq_num)[0]
-                    last_ack = seq_num
-                    ack_segment = Segment(ack, seq_num)
+            is_data = struct.unpack('B', segment.type)[0] == 0
+
+            checksum_matches = LARGEST_NUM - segment.generate_checksum() == struct.unpack('H', segment.checksum)[0]
+            not_duplicate = last_seq_num != struct.unpack('B', segment.seq_num)[0]
+            seq_num_matches = expected_seq_num == struct.unpack('B', segment.seq_num)[0]
+            seq_num = struct.unpack('B', segment.seq_num)[0]
+
+            if is_data:
+                if checksum_matches:
+                    print(f"{device.name}: {TransportLayer.name}: Checksum verified")
+                    last_seq_num = 1 - last_seq_num
+                    if not_duplicate:
+                        print(f"{device.name}: {TransportLayer.name}: DATA segment delivered to Application Layer. Data size={struct.unpack('H', segment.data.value)[0]}")
+                    else:
+                        print(f"{device.name}: {TransportLayer.name}: Duplicate DATA segment but will send ACK")
+                    ack = TransportLayer.create_ack(seq_num)
                     print(f"{device.name}: {TransportLayer.name}: Segment created by adding transport layer header (ACK, seq={seq_num})")
                     print(f"{device.name}: {TransportLayer.name}: Segment sent to Network Layer\n")
-                    NetworkLayer.run(device, ack_segment)
+                    NetworkLayer.run(device, ack)
+
                 else:
-                    ack_seq = struct.unpack('B', segment.seq_num)[0]
-                    if expected_seq == ack_seq:
-                        last_ack = ack_seq
-                        print(f"{device.name}: {TransportLayer.name}: ACK received: seq={ack_seq}")
-                        expected_seq = 1 - ack_seq
-                        TransportLayer.run(device, original_data)
-                    else:
-                        print("Retransmitting segment")
-                        #Retransmit current segment
-                            #can do this by storing a copy of most recent segment transmitted,  or making a new segment with the same size
-                        #expected sequence number stays the same
+                    ack = TransportLayer.create_ack(last_seq_num)
+                    print(f"{device.name}: {TransportLayer.name}: Checksum failed")
+                    print(f"{device.name}: {TransportLayer.name}: Retransmitting last segment (ACK, seq={last_seq_num})")
+                    print(f"{device.name}: {TransportLayer.name}: Segment sent to Network Layer\n")
+                    NetworkLayer.run(device, ack)
+
             else:
-                print("FrameDiscarded")
-                ack = Data(0)
-                seq_num = last_ack
-                ack_segment = Segment(ack, seq_num)
-                print("Transmitting last ACK")
-                NetworkLayer.run(device, ack_segment)
+                if checksum_matches and seq_num_matches:
+                    print(f"{device.name}: {TransportLayer.name}: Checksum verified")
+                    seq_num = struct.unpack('B', segment.seq_num)[0]
+                    last_seq_num = seq_num
+                    expected_seq_num = 1 - expected_seq_num
+                    print(f"{device.name}: {TransportLayer.name}: ACK received: seq={seq_num}\n")
+                    TransportLayer.run(device, original_data)
+
+                else:
+                    print(f"{device.name}: {TransportLayer.name}: Checksum failed or unexpected ACK")
+                    print(f"{device.name}: {TransportLayer.name}: Retransmitting last segment\n")
+                    NetworkLayer.run(device, last_segment)
 
     @staticmethod
     def create_segment(data, seq_num):
@@ -243,3 +254,8 @@ class TransportLayer:
         split_data.value = struct.pack('H', value)
         data_left -= value
         return Segment(split_data, seq_num)
+
+    @staticmethod
+    def create_ack(seq_num):
+        ack = Data(0)
+        return Segment(ack, seq_num)
