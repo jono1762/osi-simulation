@@ -11,7 +11,10 @@ def transmit(value):
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
-        print("Invalid input.")
+        print("Wrong number of arguments provided - provide exactly one positive integer value when running this script.")
+    
+    elif int(sys.argv[1]) <= 0:
+        print("Integer value argument must be a positive number.")
     
     else:
         transmit(int(sys.argv[1]))
