@@ -66,7 +66,7 @@ class DataLinkLayer:
     
     @staticmethod
     def get_string_rep_mac(mac_addr):
-        return ':'.join(list(map(lambda x: hex(x)[2:].upper()), struct.unpack("6B", mac_addr))))
+        return ':'.join(list(map(lambda x: hex(x)[2:].upper(), struct.unpack("6B", mac_addr))))
 
 class Packet:
     def __init__(self, payload, src_hostname, dest_hostname):
