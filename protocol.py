@@ -174,17 +174,28 @@ class Segment:
 
 class TransportLayer:
     name = "Layer 4"
-
+    index = 0
     @staticmethod
     def run(device, data):
         if type(data) == Data:
             print(f"{device.name}: {TransportLayer.name}: Data received from Application Layer. Data size={struct.unpack('H', data.value)[0]}")
             segments = TransportLayer.create_segment(data)
-            for segment in segments:
+            #for segment in segments:
+                #print(f"{device.name}: {TransportLayer.name}: Checksum computed")
+                #print(f"{device.name}: {TransportLayer.name}: Segment created by adding transport layer header (DATA, seq={struct.unpack('B', segment.seq_num)[0]}) (encapsulation)")
+                #print(f"{device.name}: {TransportLayer.name}: Segment sent to Network Layer\n")
+                #NetworkLayer.run(device, segment)
+            index = 0
+            while index < len(segments):
+                expected_seq = segments[index].seq_num
                 print(f"{device.name}: {TransportLayer.name}: Checksum computed")
                 print(f"{device.name}: {TransportLayer.name}: Segment created by adding transport layer header (DATA, seq={struct.unpack('B', segment.seq_num)[0]}) (encapsulation)")
                 print(f"{device.name}: {TransportLayer.name}: Segment sent to Network Layer\n")
-                NetworkLayer.run(device, segment)
+                NetworkLayer.run(device, segments[index])
+    
+                if ack.seq == expected_seq:
+                    index += 1
+    
         
         elif type(data) == Packet:
             print(f"{device.name}: {TransportLayer.name}: Segment received from Network Layer")
