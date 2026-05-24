@@ -143,6 +143,7 @@ class NetworkLayer:
             packet.ttl = struct.pack('B', ttl)
 
 # Transport Layer
+LARGEST_NUM = 2 ** 16 - 1
 
 class Segment:
     def __init__(self, data, seq_num):
@@ -152,25 +153,25 @@ class Segment:
         self.type = struct.pack('B', struct.unpack('B', data.type)[0])
         self.seq_num = struct.pack('B', seq_num)
         self.data = data
-        self.checksum = self.generate_checksum()
+        self.checksum = struct.pack('H', LARGEST_NUM - self.generate_checksum())
     
-    # Fix checksum logic so more accurate (e.g. generating 16-bit words logic incorrect)
     def generate_checksum(self):
         rep_segment = self.src_port + self.dest_port + self.length + self.type + self.seq_num + self.data.value
         if len(rep_segment) % 2 != 0:
             rep_segment += struct.pack('B', 0)
         
         words = []
-        for idx in range(0, len(rep_segment), 2):
-            words.append(rep_segment[idx] + rep_segment[idx + 1])
-        
-        result = sum(words)
-        while result > (2 ** 16 - 1):
-            result %= (2 ** 16 - 1)
-        
-        checksum = 2 ** 16 - 1 - result
-        
-        return struct.pack('H', checksum)
+        for i in range(0, len(rep_segment), 2):
+            words.append(rep_segment[i: i + 2])
+
+        result = 0
+        for word in words:
+            result += struct.unpack('H', word)[0]
+
+        if result > LARGEST_NUM:
+            result = result // LARGEST_NUM + result % LARGEST_NUM
+               
+        return result
 
 data_left = None
 expected_seq = None
@@ -202,7 +203,7 @@ class TransportLayer:
         elif type(data) == Packet:
             print(f"{device.name}: {TransportLayer.name}: Segment received from Network Layer")
             segment = data.payload
-            if segment.generate_checksum() == segment.checksum:
+            if LARGEST_NUM - segment.generate_checksum() == struct.unpack('H', segment.checksum)[0]:
                 print(f"{device.name}: {TransportLayer.name}: Checksum verified")
                 if struct.unpack('B', segment.type)[0] == 0:
                     print(f"{device.name}: {TransportLayer.name}: DATA segment delivered to Application Layer. Data size={struct.unpack('H', segment.data.value)[0]}")
