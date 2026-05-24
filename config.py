@@ -24,7 +24,8 @@ for name, ip_addr in name_to_ip.items():
     name_to_ip[name] = struct.pack("4B", d1, d2, d3, d4)
 
 for name, mac_addr in name_to_mac.items():
-    name_to_mac[name] = struct.pack("17s", mac_addr.encode("utf-8"))
+    d1, d2, d3, d4, d5, d6 = list(map(lambda x: int(x, 16), mac_addr.split(':')))
+    name_to_mac[name] = struct.pack("6B", d1, d2, d3, d4, d5, d6)
 
 def generate_routing_table():
     routing_table = {}
