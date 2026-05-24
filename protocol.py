@@ -1,12 +1,13 @@
 from config import name_to_ip, name_to_mac, ip_to_network, ROUTING_TABLE, HOSTS, INTERFACES
 from devices import DEVICES, Router
 import struct
+from copy import deepcopy
 
 # Application Layer
 
 class Data:
     def __init__(self, value=None):
-        self.value = struct.pack('B', value)
+        self.value = struct.pack('H', value)
         self.type = struct.pack('B', 0 if value is None else 1)
 
 # Data Link Layer
@@ -144,12 +145,12 @@ class NetworkLayer:
 # Transport Layer
 
 class Segment:
-    def __init__(self, data, count=0):
+    def __init__(self, data, seq_num):
         self.src_port = struct.pack('H', 5000)
         self.dest_port = struct.pack('H', 80)
-        self.length = struct.pack('H', 2 + 2 + 2 + 2 + 1 + 1 + struct.unpack('B', data.value)[0])
+        self.length = struct.pack('H', 2 + 2 + 2 + 2 + 1 + 1 + struct.unpack('H', data.value)[0])
         self.type = struct.pack('B', struct.unpack('B', data.type)[0])
-        self.seq_num = struct.pack('B', count % 2)
+        self.seq_num = struct.pack('B', seq_num)
         self.data = data
         self.checksum = self.generate_checksum()
     
@@ -177,19 +178,36 @@ class TransportLayer:
     @staticmethod
     def run(device, data):
         if type(data) == Data:
-            print(f"{device.name}: {TransportLayer.name}: Data received from Application Layer. Data size={struct.unpack('B', data.value)[0]}")
-            segment = Segment(data)
-            print(f"{device.name}: {TransportLayer.name}: Checksum computed")
-            print(f"{device.name}: {TransportLayer.name}: Segment created by adding transport layer header (DATA, seq={struct.unpack('B', segment.seq_num)[0]}) (encapsulation)")
-            print(f"{device.name}: {TransportLayer.name}: Segment sent to Network Layer\n")
-            NetworkLayer.run(device, segment)
+            print(f"{device.name}: {TransportLayer.name}: Data received from Application Layer. Data size={struct.unpack('H', data.value)[0]}")
+            segments = TransportLayer.create_segment(data)
+            for segment in segments:
+                print(f"{device.name}: {TransportLayer.name}: Checksum computed")
+                print(f"{device.name}: {TransportLayer.name}: Segment created by adding transport layer header (DATA, seq={struct.unpack('B', segment.seq_num)[0]}) (encapsulation)")
+                print(f"{device.name}: {TransportLayer.name}: Segment sent to Network Layer\n")
+                NetworkLayer.run(device, segment)
         
         elif type(data) == Packet:
             print(f"{device.name}: {TransportLayer.name}: Segment received from Network Layer")
             segment = data.payload
             if segment.generate_checksum() == segment.checksum:
                 print(f"{device.name}: {TransportLayer.name}: Checksum verified")
-                print(f"{device.name}: {TransportLayer.name}: DATA segment delivered to Application Layer. Data size={struct.unpack('B', segment.data.value)[0]}\n")
+                print(f"{device.name}: {TransportLayer.name}: DATA segment delivered to Application Layer. Data size={struct.unpack('H', segment.data.value)[0]}\n")
+    
+    @staticmethod
+    def create_segment(data):
+        segments_array = []
+        data_value = struct.unpack('H', data.value)[0]
+        num_segments = data_value // 500
+        remainder = data_value - 500 * num_segments
+        if data_value % 500 != 0:
+            num_segments += 1
+
+        for i in range(num_segments):
+            split_data = deepcopy(data)
+            split_data.value = struct.pack('H', 500 if i < (num_segments - 1) or data_value % 500 == 0 else remainder)
+            segments_array.append(Segment(split_data, i % 2))
+        
+        return segments_array
 
     @staticmethod
     def rdt():
