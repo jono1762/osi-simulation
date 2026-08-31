@@ -6,12 +6,12 @@ To run the program, open the terminal and use the command:
 
 [IntValue] indicates the size of the message from the application layer in bytes. If this size exceeds 500 bytes, the message will be segmented.
 
-## Implementation overview
+## Implementation Overview
 ### main.py
 - Outlines the control flow of the application.
 - Inputs an integer argument corresponding to the application message size.
 - Creates a `Data` object containing the application message.
-- Passses the object into the `TransportLayer` of `Host A` which results in transmission of the message between the hosts.
+- Passes the object into the `TransportLayer` of `Host A` which results in transmission of the message between the hosts.
 
 ### config.py
 - Outlines the hard-coded information of the application.
