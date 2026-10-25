@@ -1,4 +1,4 @@
-# CITS3002-Project
+# OSI Simulation
 ## Instructions to Run
 To run the program, open the terminal and use the command:
 
